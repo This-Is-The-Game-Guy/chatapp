@@ -2,4 +2,6 @@ flask
 flask-socketio
 duckduckgo-search
 groq
-simple-websocket
+gunicorn
+gevent
+gevent-websocket
