@@ -1,0 +1,6 @@
+flask
+flask-socketio
+duckduckgo-search
+groq
+eventlet
+gunicorn
