@@ -1,7 +1,10 @@
+import os
+
 from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
 
-app = Flask(__name__)
+import os
+app = Flask(__name__, template_folder=os.path.join(os.path.dirname(__file__), 'templates'))
 socketio = SocketIO(app)
 
 messages = []
@@ -15,5 +18,7 @@ def handle_message(data):
     messages.append(data)
     emit("message", data, broadcast=True)
 
+
 if __name__ == "__main__":
-    socketio.run(app, host="0.0.0.0", port=5000, debug=False)
+    port = int(os.environ.get("PORT", 5000))
+    socketio.run(app, host="0.0.0.0", port=port, debug=False)
