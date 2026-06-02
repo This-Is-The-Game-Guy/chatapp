@@ -2,6 +2,10 @@ from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
 import os
 
+import os
+print("FILES:", os.listdir(os.path.dirname(__file__)))
+print("TEMPLATES:", os.path.exists(os.path.join(os.path.dirname(__file__), 'templates')))
+
 app = Flask(__name__, template_folder=os.path.join(os.path.dirname(__file__), 'templates'))
 socketio = SocketIO(app, cors_allowed_origins="*")
 
