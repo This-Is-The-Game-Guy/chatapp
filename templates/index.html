@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>\\BEST CHAT//</title>
+    <title>Chat V1.9</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -36,6 +36,24 @@
             gap: 10px;
         }
         .header span { color: #72767d; font-size: 14px; font-weight: normal; }
+        .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+        .header-avatar {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #7289da;
+            cursor: pointer;
+        }
+        .settings-btn {
+            background: none;
+            border: none;
+            color: #72767d;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+        .settings-btn:hover { background: #40444b; color: white; }
         .messages {
             flex: 1;
             overflow-y: auto;
@@ -44,25 +62,19 @@
             flex-direction: column;
             gap: 12px;
         }
-        .message {
-            display: flex;
-            gap: 12px;
-            align-items: flex-start;
-        }
+        .message { display: flex; gap: 12px; align-items: flex-start; }
         .avatar {
-            width: 40px;
-            height: 40px;
+            width: 40px; height: 40px;
             border-radius: 50%;
             object-fit: cover;
             flex-shrink: 0;
+            cursor: pointer;
+            transition: opacity 0.2s;
         }
-        .avatar-wrapper {
-            position: relative;
-            flex-shrink: 0;
-        }
+        .avatar:hover { opacity: 0.8; }
+        .avatar-wrapper { position: relative; flex-shrink: 0; }
         .status-dot {
-            width: 12px;
-            height: 12px;
+            width: 12px; height: 12px;
             border-radius: 50%;
             position: absolute;
             bottom: 0; right: 0;
@@ -70,7 +82,8 @@
         }
         .message-body { display: flex; flex-direction: column; gap: 2px; }
         .message-header { display: flex; align-items: center; gap: 8px; }
-        .username { font-size: 14px; font-weight: bold; color: #7289da; }
+        .username { font-size: 14px; font-weight: bold; color: #7289da; cursor: pointer; }
+        .username:hover { text-decoration: underline; }
         .timestamp { font-size: 11px; color: #72767d; }
         .content { color: #dcddde; font-size: 14px; line-height: 1.5; }
         .bio-tag { font-size: 11px; color: #72767d; font-style: italic; }
@@ -92,8 +105,7 @@
             font-size: 14px;
             outline: none;
         }
-        input[type="text"]::placeholder,
-        input[type="password"]::placeholder { color: #72767d; }
+        input::placeholder { color: #72767d; }
         button {
             background: #7289da;
             color: white;
@@ -105,6 +117,8 @@
             font-weight: bold;
         }
         button:hover { background: #5b6eae; }
+
+        /* Screens */
         .screen {
             position: fixed;
             top: 0; left: 0;
@@ -126,7 +140,6 @@
             box-shadow: 0 20px 60px rgba(0,0,0,0.5);
         }
         .auth-box h2 { color: white; text-align: center; font-size: 22px; }
-        .auth-box p { color: #72767d; text-align: center; font-size: 13px; }
         .auth-box label { color: #72767d; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
         .auth-box input[type="text"],
         .auth-box input[type="password"],
@@ -143,19 +156,7 @@
         }
         .auth-box textarea { resize: none; height: 70px; }
         .auth-box button { width: 100%; padding: 14px; }
-        .switch-link {
-            color: #7289da;
-            text-align: center;
-            font-size: 13px;
-            cursor: pointer;
-            text-decoration: underline;
-        }
-        .error-msg {
-            color: #f04747;
-            font-size: 13px;
-            text-align: center;
-            display: none;
-        }
+        .error-msg { color: #f04747; font-size: 13px; text-align: center; display: none; }
         .avatar-upload { display: flex; flex-direction: column; align-items: center; gap: 10px; }
         .avatar-preview {
             width: 80px; height: 80px;
@@ -165,10 +166,10 @@
             background: #40444b;
         }
         .upload-btn {
-            background: #40444b;
-            color: #dcddde;
-            font-size: 13px;
-            padding: 8px 16px;
+            background: #40444b !important;
+            color: #dcddde !important;
+            font-size: 13px !important;
+            padding: 8px 16px !important;
             width: auto !important;
         }
         .status-options { display: flex; gap: 10px; }
@@ -197,6 +198,91 @@
             font-weight: bold;
         }
         .tab.active { border-color: #7289da; color: white; background: #3d4a6b; }
+
+        /* Modal overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: #2f3136;
+            border-radius: 12px;
+            padding: 30px;
+            width: 340px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+            position: relative;
+        }
+        .modal h3 { color: white; font-size: 18px; text-align: center; }
+        .modal label { color: #72767d; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+        .modal input[type="text"],
+        .modal textarea {
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: none;
+            background: #40444b;
+            color: white;
+            font-size: 14px;
+            outline: none;
+            width: 100%;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .modal textarea { resize: none; height: 70px; }
+        .modal-close {
+            position: absolute;
+            top: 12px; right: 16px;
+            background: none;
+            border: none;
+            color: #72767d;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px;
+        }
+        .modal-close:hover { color: white; background: none; }
+
+        /* Profile popup */
+        .profile-popup {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+        .profile-popup img {
+            width: 90px; height: 90px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #7289da;
+        }
+        .profile-popup .popup-username {
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .profile-popup .popup-status {
+            font-size: 13px;
+            font-weight: bold;
+        }
+        .profile-popup .popup-bio {
+            color: #dcddde;
+            font-size: 14px;
+            line-height: 1.5;
+            background: #40444b;
+            padding: 10px 14px;
+            border-radius: 8px;
+            width: 100%;
+            text-align: left;
+        }
+        .save-btn { width: 100%; padding: 12px; margin-top: 4px; }
     </style>
 </head>
 <body>
@@ -205,30 +291,20 @@
     <div class="screen" id="authScreen">
         <div class="auth-box">
             <h2>💬 BEST CHAT</h2>
-
             <div class="tabs">
                 <div class="tab active" id="loginTab" onclick="switchTab('login')">Log In</div>
                 <div class="tab" id="signupTab" onclick="switchTab('signup')">Sign Up</div>
             </div>
-
             <div id="errorMsg" class="error-msg"></div>
 
-            <!-- Login Form -->
             <div id="loginForm">
                 <div style="display:flex;flex-direction:column;gap:12px">
-                    <div>
-                        <label>Username</label>
-                        <input type="text" id="loginUsername" placeholder="Your username..." />
-                    </div>
-                    <div>
-                        <label>Password</label>
-                        <input type="password" id="loginPassword" placeholder="Your password..." />
-                    </div>
+                    <div><label>Username</label><input type="text" id="loginUsername" placeholder="Your username..." /></div>
+                    <div><label>Password</label><input type="password" id="loginPassword" placeholder="Your password..." /></div>
                     <button onclick="doLogin()">Log In 🚀</button>
                 </div>
             </div>
 
-            <!-- Signup Form -->
             <div id="signupForm" style="display:none">
                 <div style="display:flex;flex-direction:column;gap:12px">
                     <div class="avatar-upload">
@@ -236,30 +312,56 @@
                         <input type="file" id="avatarInput" accept="image/*" style="display:none" />
                         <button class="upload-btn" onclick="document.getElementById('avatarInput').click()">📷 Upload Photo</button>
                     </div>
-                    <div>
-                        <label>Username</label>
-                        <input type="text" id="signupUsername" placeholder="Pick a username..." />
-                    </div>
-                    <div>
-                        <label>Password</label>
-                        <input type="password" id="signupPassword" placeholder="Create a password..." />
-                    </div>
-                    <div>
-                        <label>Bio</label>
-                        <textarea id="signupBio" placeholder="Tell us about yourself..."></textarea>
-                    </div>
+                    <div><label>Username</label><input type="text" id="signupUsername" placeholder="Pick a username..." /></div>
+                    <div><label>Password</label><input type="password" id="signupPassword" placeholder="Create a password..." /></div>
+                    <div><label>Bio</label><textarea id="signupBio" placeholder="Tell us about yourself..."></textarea></div>
                     <div>
                         <label>Status</label>
                         <div class="status-options">
-                            <div class="status-option selected" data-status="online" onclick="selectStatus(this)">🟢 Online</div>
-                            <div class="status-option" data-status="busy" onclick="selectStatus(this)">🔴 Busy</div>
-                            <div class="status-option" data-status="away" onclick="selectStatus(this)">🟡 Away</div>
+                            <div class="status-option selected" data-status="online" onclick="selectStatus(this, 'signup')">🟢 Online</div>
+                            <div class="status-option" data-status="busy" onclick="selectStatus(this, 'signup')">🔴 Busy</div>
+                            <div class="status-option" data-status="away" onclick="selectStatus(this, 'signup')">🟡 Away</div>
                         </div>
                     </div>
                     <button onclick="doSignup()">Create Account 🎉</button>
                 </div>
             </div>
+        </div>
+    </div>
 
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsOverlay" onclick="closeSettings(event)">
+        <div class="modal">
+            <button class="modal-close" onclick="document.getElementById('settingsOverlay').classList.remove('open')">✕</button>
+            <h3>⚙️ Edit Profile</h3>
+            <div class="avatar-upload">
+                <img id="settingsAvatarPreview" class="avatar-preview" src="" />
+                <input type="file" id="settingsAvatarInput" accept="image/*" style="display:none" />
+                <button class="upload-btn" onclick="document.getElementById('settingsAvatarInput').click()">📷 Change Photo</button>
+            </div>
+            <div><label>Bio</label><textarea id="settingsBio" placeholder="Tell us about yourself..."></textarea></div>
+            <div>
+                <label>Status</label>
+                <div class="status-options">
+                    <div class="status-option" data-status="online" onclick="selectStatus(this, 'settings')">🟢 Online</div>
+                    <div class="status-option" data-status="busy" onclick="selectStatus(this, 'settings')">🔴 Busy</div>
+                    <div class="status-option" data-status="away" onclick="selectStatus(this, 'settings')">🟡 Away</div>
+                </div>
+            </div>
+            <button class="save-btn" onclick="saveSettings()">Save Changes ✅</button>
+        </div>
+    </div>
+
+    <!-- Profile Popup Modal -->
+    <div class="modal-overlay" id="profileOverlay" onclick="closeProfile(event)">
+        <div class="modal">
+            <button class="modal-close" onclick="document.getElementById('profileOverlay').classList.remove('open')">✕</button>
+            <div class="profile-popup">
+                <img id="popupAvatar" src="" />
+                <div class="popup-username" id="popupUsername"></div>
+                <div class="popup-status" id="popupStatus"></div>
+                <div class="popup-bio" id="popupBio"></div>
+            </div>
         </div>
     </div>
 
@@ -267,6 +369,10 @@
     <div class="container">
         <div class="header">
             💬 General <span>Real time chat room</span>
+            <div class="header-right">
+                <button class="settings-btn" onclick="openSettings()">⚙️</button>
+                <img id="headerAvatar" class="header-avatar" src="" onclick="openSettings()" />
+            </div>
         </div>
         <div class="messages" id="messages"></div>
         <div class="input-area">
@@ -279,12 +385,20 @@
         const socket = io();
         let profile = {};
         let selectedStatus = "online";
+        let selectedSettingsStatus = "online";
         let avatarData = "";
+        let settingsAvatarData = "";
 
         const statusColors = {
             online: "#43b581",
             busy: "#f04747",
             away: "#faa61a"
+        };
+
+        const statusLabels = {
+            online: "🟢 Online",
+            busy: "🔴 Busy",
+            away: "🟡 Away"
         };
 
         function switchTab(tab) {
@@ -312,17 +426,84 @@
             reader.readAsDataURL(file);
         });
 
-        function selectStatus(el) {
-            document.querySelectorAll(".status-option").forEach(o => o.classList.remove("selected"));
-            el.classList.add("selected");
-            selectedStatus = el.dataset.status;
+        document.getElementById("settingsAvatarInput").addEventListener("change", function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                document.getElementById("settingsAvatarPreview").src = ev.target.result;
+                settingsAvatarData = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function selectStatus(el, context) {
+            const parent = el.closest('.status-options');
+            parent.querySelectorAll('.status-option').forEach(o => o.classList.remove('selected'));
+            el.classList.add('selected');
+            if (context === 'signup') selectedStatus = el.dataset.status;
+            if (context === 'settings') selectedSettingsStatus = el.dataset.status;
+        }
+
+        function openSettings() {
+            document.getElementById('settingsBio').value = profile.bio || '';
+            document.getElementById('settingsAvatarPreview').src = profile.avatar;
+            settingsAvatarData = '';
+            selectedSettingsStatus = profile.status || 'online';
+            const settingsOptions = document.querySelectorAll('#settingsOverlay .status-option');
+            settingsOptions.forEach(o => {
+                o.classList.toggle('selected', o.dataset.status === selectedSettingsStatus);
+            });
+            document.getElementById('settingsOverlay').classList.add('open');
+        }
+
+        function closeSettings(e) {
+            if (e.target === document.getElementById('settingsOverlay')) {
+                document.getElementById('settingsOverlay').classList.remove('open');
+            }
+        }
+
+        async function saveSettings() {
+            const bio = document.getElementById('settingsBio').value.trim();
+            const avatar = settingsAvatarData || profile.avatar;
+
+            profile.bio = bio;
+            profile.status = selectedSettingsStatus;
+            profile.avatar = avatar;
+
+            await fetch('/profile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(profile)
+            });
+
+            document.getElementById('headerAvatar').src = avatar;
+            document.getElementById('settingsOverlay').classList.remove('open');
+        }
+
+        async function showProfile(username) {
+            const res = await fetch(`/profile/${username}`);
+            const data = await res.json();
+            if (!data) return;
+
+            document.getElementById('popupAvatar').src = data.avatar;
+            document.getElementById('popupUsername').textContent = data.username;
+            document.getElementById('popupStatus').textContent = statusLabels[data.status] || '🟢 Online';
+            document.getElementById('popupStatus').style.color = statusColors[data.status] || statusColors.online;
+            document.getElementById('popupBio').textContent = data.bio || 'No bio yet.';
+            document.getElementById('profileOverlay').classList.add('open');
+        }
+
+        function closeProfile(e) {
+            if (e.target === document.getElementById('profileOverlay')) {
+                document.getElementById('profileOverlay').classList.remove('open');
+            }
         }
 
         async function doLogin() {
             const username = document.getElementById("loginUsername").value.trim();
             const password = document.getElementById("loginPassword").value.trim();
             if (!username || !password) return showError("Please fill in all fields");
-
             const res = await fetch('/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -338,9 +519,7 @@
             const password = document.getElementById("signupPassword").value.trim();
             const bio = document.getElementById("signupBio").value.trim();
             if (!username || !password) return showError("Username and password required");
-
             const avatar = avatarData || `https://api.dicebear.com/7.x/bottts/svg?seed=${username}`;
-
             const res = await fetch('/signup', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -353,8 +532,8 @@
 
         async function enterChat(user) {
             profile = user;
-            localStorage.setItem('chatUsername', user.username);
             document.getElementById("authScreen").style.display = "none";
+            document.getElementById("headerAvatar").src = user.avatar;
 
             const res = await fetch('/messages');
             const msgs = await res.json();
@@ -417,12 +596,14 @@
                 const statusColor = statusColors[data.status] || statusColors.online;
                 div.innerHTML = `
                     <div class="avatar-wrapper">
-                        <img class="avatar" src="${data.avatar}" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${data.username}'" />
+                        <img class="avatar" src="${data.avatar}"
+                            onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${data.username}'"
+                            onclick="showProfile('${data.username}')" />
                         <div class="status-dot" style="background:${statusColor}"></div>
                     </div>
                     <div class="message-body">
                         <div class="message-header">
-                            <span class="username">${data.username}</span>
+                            <span class="username" onclick="showProfile('${data.username}')">${data.username}</span>
                             <span class="timestamp">${time}</span>
                         </div>
                         ${data.bio ? `<span class="bio-tag">${data.bio}</span>` : ''}
