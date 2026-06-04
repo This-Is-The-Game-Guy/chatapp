@@ -231,15 +231,17 @@
         }
 
         async function deleteMessage(id) {
-            if (!confirm('Delete this message?')) return;
-            await fetch('/admin/delete_message', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ key, id })
-            });
-            document.getElementById(`msg-${id}`).remove();
-            showToast('Message deleted!', '#f04747');
-        }
+    if (!confirm('Delete this message?')) return;
+    await fetch('/admin/delete_message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, id })
+    });
+    const row = document.getElementById(`msg-${id}`);
+    if (row) row.remove();
+    showToast('Message deleted!', '#f04747');
+}
+        
 
         loadUsers();
 loadMessages();
