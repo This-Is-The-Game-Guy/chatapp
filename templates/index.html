@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat V1.9</title>
+    <title>\\BEST CHAT//</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -44,7 +44,7 @@
             border: 2px solid #7289da;
             cursor: pointer;
         }
-        .settings-btn {
+        .icon-btn {
             background: none;
             border: none;
             color: #72767d;
@@ -53,7 +53,7 @@
             padding: 4px 8px;
             border-radius: 6px;
         }
-        .settings-btn:hover { background: #40444b; color: white; }
+        .icon-btn:hover { background: #40444b; color: white; }
         .messages {
             flex: 1;
             overflow-y: auto;
@@ -117,8 +117,6 @@
             font-weight: bold;
         }
         button:hover { background: #5b6eae; }
-
-        /* Screens */
         .screen {
             position: fixed;
             top: 0; left: 0;
@@ -198,8 +196,6 @@
             font-weight: bold;
         }
         .tab.active { border-color: #7289da; color: white; background: #3d4a6b; }
-
-        /* Modal overlay */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0;
@@ -248,8 +244,6 @@
             padding: 4px;
         }
         .modal-close:hover { color: white; background: none; }
-
-        /* Profile popup */
         .profile-popup {
             text-align: center;
             display: flex;
@@ -263,15 +257,8 @@
             object-fit: cover;
             border: 3px solid #7289da;
         }
-        .profile-popup .popup-username {
-            color: white;
-            font-size: 20px;
-            font-weight: bold;
-        }
-        .profile-popup .popup-status {
-            font-size: 13px;
-            font-weight: bold;
-        }
+        .profile-popup .popup-username { color: white; font-size: 20px; font-weight: bold; }
+        .profile-popup .popup-status { font-size: 13px; font-weight: bold; }
         .profile-popup .popup-bio {
             color: #dcddde;
             font-size: 14px;
@@ -283,6 +270,172 @@
             text-align: left;
         }
         .save-btn { width: 100%; padding: 12px; margin-top: 4px; }
+
+        /* AI Floating Window */
+        .ai-window {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 360px;
+            height: 500px;
+            background: #2f3136;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 30;
+            border: 1px solid #40444b;
+        }
+        .ai-window.open { display: flex; }
+        .ai-header {
+            background: #202225;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+            font-weight: bold;
+            font-size: 15px;
+        }
+        .ai-header-right { margin-left: auto; display: flex; gap: 8px; }
+        .ai-personality-btn {
+            background: #40444b;
+            border: none;
+            color: #dcddde;
+            font-size: 13px;
+            padding: 5px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .ai-personality-btn:hover { background: #4f5660; }
+        .ai-close {
+            background: none;
+            border: none;
+            color: #72767d;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+        }
+        .ai-close:hover { color: white; background: #40444b; }
+        .ai-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .ai-msg {
+            max-width: 85%;
+            padding: 10px 14px;
+            border-radius: 14px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .ai-msg.user {
+            background: #7289da;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        .ai-msg.assistant {
+            background: #40444b;
+            color: #dcddde;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+        .ai-msg.typing {
+            background: #40444b;
+            color: #72767d;
+            align-self: flex-start;
+            font-style: italic;
+        }
+        .ai-input-area {
+            padding: 12px;
+            background: #202225;
+            display: flex;
+            gap: 8px;
+        }
+        .ai-input-area input {
+            flex: 1;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: none;
+            background: #40444b;
+            color: white;
+            font-size: 14px;
+            outline: none;
+        }
+        .ai-input-area button {
+            padding: 10px 14px;
+            font-size: 14px;
+        }
+
+        /* Personality Modal */
+        .personality-modal {
+            background: #2f3136;
+            border-radius: 12px;
+            padding: 24px;
+            width: 360px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+            position: relative;
+        }
+        .personality-modal h3 { color: white; font-size: 17px; }
+        .personality-modal p { color: #72767d; font-size: 13px; }
+        .personality-modal textarea {
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            background: #40444b;
+            color: white;
+            font-size: 14px;
+            outline: none;
+            width: 100%;
+            height: 120px;
+            resize: none;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .preset-btns {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .preset-btn {
+            background: #40444b;
+            color: #dcddde;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            width: auto;
+        }
+        .preset-btn:hover { background: #4f5660; }
+
+        /* AI toggle button */
+        .ai-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: #7289da;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            z-index: 29;
+            display: none;
+        }
+        .ai-toggle:hover { background: #5b6eae; }
+        .ai-toggle.visible { display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
@@ -296,7 +449,6 @@
                 <div class="tab" id="signupTab" onclick="switchTab('signup')">Sign Up</div>
             </div>
             <div id="errorMsg" class="error-msg"></div>
-
             <div id="loginForm">
                 <div style="display:flex;flex-direction:column;gap:12px">
                     <div><label>Username</label><input type="text" id="loginUsername" placeholder="Your username..." /></div>
@@ -304,7 +456,6 @@
                     <button onclick="doLogin()">Log In 🚀</button>
                 </div>
             </div>
-
             <div id="signupForm" style="display:none">
                 <div style="display:flex;flex-direction:column;gap:12px">
                     <div class="avatar-upload">
@@ -365,12 +516,51 @@
         </div>
     </div>
 
+    <!-- Personality Modal -->
+    <div class="modal-overlay" id="personalityOverlay" onclick="closePersonality(event)">
+        <div class="personality-modal">
+            <button class="modal-close" onclick="document.getElementById('personalityOverlay').classList.remove('open')">✕</button>
+            <h3>🎭 AI Personality</h3>
+            <p>Customize how the AI talks to you. Leave blank for default helpful assistant.</p>
+            <textarea id="personalityInput" placeholder="e.g. You are Lily, an adoring fan who is half cat..."></textarea>
+            <div class="preset-btns">
+                <button class="preset-btn" onclick="setPreset('default')">🤖 Default</button>
+                <button class="preset-btn" onclick="setPreset('pirate')">🏴‍☠️ Pirate</button>
+                <button class="preset-btn" onclick="setPreset('roast')">🔥 Roast Bot</button>
+                <button class="preset-btn" onclick="setPreset('shakespeare')">📜 Shakespeare</button>
+                <button class="preset-btn" onclick="setPreset('lily')">🐱 Lily</button>
+            </div>
+            <button onclick="savePersonality()">Save Personality ✅</button>
+        </div>
+    </div>
+
+    <!-- AI Floating Window -->
+    <div class="ai-window" id="aiWindow">
+        <div class="ai-header">
+            🤖 AI Assistant
+            <div class="ai-header-right">
+                <button class="ai-personality-btn" onclick="openPersonality()">🎭 Personality</button>
+                <button class="ai-close" onclick="toggleAI()">✕</button>
+            </div>
+        </div>
+        <div class="ai-messages" id="aiMessages">
+            <div class="ai-msg assistant">Hey! I'm your private AI assistant. Ask me anything! 👋</div>
+        </div>
+        <div class="ai-input-area">
+            <input type="text" id="aiInput" placeholder="Ask me anything..." />
+            <button onclick="sendAI()">➤</button>
+        </div>
+    </div>
+
+    <!-- AI Toggle Button (shows when window is closed) -->
+    <button class="ai-toggle" id="aiToggle" onclick="toggleAI()">🤖</button>
+
     <!-- Chat -->
     <div class="container">
         <div class="header">
             💬 General <span>Real time chat room</span>
             <div class="header-right">
-                <button class="settings-btn" onclick="openSettings()">⚙️</button>
+                <button class="icon-btn" onclick="openSettings()">⚙️</button>
                 <img id="headerAvatar" class="header-avatar" src="" onclick="openSettings()" />
             </div>
         </div>
@@ -388,19 +578,21 @@
         let selectedSettingsStatus = "online";
         let avatarData = "";
         let settingsAvatarData = "";
+        let aiHistory = [];
+        let aiPersonality = "You are a helpful, friendly AI assistant.";
 
-        const statusColors = {
-            online: "#43b581",
-            busy: "#f04747",
-            away: "#faa61a"
+        const statusColors = { online: "#43b581", busy: "#f04747", away: "#faa61a" };
+        const statusLabels = { online: "🟢 Online", busy: "🔴 Busy", away: "🟡 Away" };
+
+        const presets = {
+            default: "You are a helpful, friendly AI assistant.",
+            pirate: "You are a pirate. You speak entirely in pirate slang and always reference the sea, treasure, and sailing. Yarr!",
+            roast: "You are a roast bot. You gently roast everything the user says in a funny, lighthearted way. Never be mean, just playfully sarcastic.",
+            shakespeare: "You are Shakespeare. You respond entirely in Early Modern English, using thee, thou, dost, and other Shakespearean language.",
+            lily: "You are Lily, an adoring fan who is half cat half human with black cat ears, tail and whiskers. You are 10 feet 9.5 inches tall, very anxious, and absolutely obsessed with the user who is your favorite musician. You squeal a lot."
         };
 
-        const statusLabels = {
-            online: "🟢 Online",
-            busy: "🔴 Busy",
-            away: "🟡 Away"
-        };
-
+        // Tab switching
         function switchTab(tab) {
             document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
             document.getElementById('signupForm').style.display = tab === 'signup' ? 'block' : 'none';
@@ -415,6 +607,7 @@
             el.style.display = msg ? 'block' : 'none';
         }
 
+        // Avatar uploads
         document.getElementById("avatarInput").addEventListener("change", function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -437,6 +630,7 @@
             reader.readAsDataURL(file);
         });
 
+        // Status selection
         function selectStatus(el, context) {
             const parent = el.closest('.status-options');
             parent.querySelectorAll('.status-option').forEach(o => o.classList.remove('selected'));
@@ -445,47 +639,43 @@
             if (context === 'settings') selectedSettingsStatus = el.dataset.status;
         }
 
+        // Settings
         function openSettings() {
             document.getElementById('settingsBio').value = profile.bio || '';
             document.getElementById('settingsAvatarPreview').src = profile.avatar;
             settingsAvatarData = '';
             selectedSettingsStatus = profile.status || 'online';
-            const settingsOptions = document.querySelectorAll('#settingsOverlay .status-option');
-            settingsOptions.forEach(o => {
+            document.querySelectorAll('#settingsOverlay .status-option').forEach(o => {
                 o.classList.toggle('selected', o.dataset.status === selectedSettingsStatus);
             });
             document.getElementById('settingsOverlay').classList.add('open');
         }
 
         function closeSettings(e) {
-            if (e.target === document.getElementById('settingsOverlay')) {
+            if (e.target === document.getElementById('settingsOverlay'))
                 document.getElementById('settingsOverlay').classList.remove('open');
-            }
         }
 
         async function saveSettings() {
             const bio = document.getElementById('settingsBio').value.trim();
             const avatar = settingsAvatarData || profile.avatar;
-
             profile.bio = bio;
             profile.status = selectedSettingsStatus;
             profile.avatar = avatar;
-
             await fetch('/profile', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(profile)
             });
-
             document.getElementById('headerAvatar').src = avatar;
             document.getElementById('settingsOverlay').classList.remove('open');
         }
 
+        // Profile popup
         async function showProfile(username) {
             const res = await fetch(`/profile/${username}`);
             const data = await res.json();
             if (!data) return;
-
             document.getElementById('popupAvatar').src = data.avatar;
             document.getElementById('popupUsername').textContent = data.username;
             document.getElementById('popupStatus').textContent = statusLabels[data.status] || '🟢 Online';
@@ -495,11 +685,79 @@
         }
 
         function closeProfile(e) {
-            if (e.target === document.getElementById('profileOverlay')) {
+            if (e.target === document.getElementById('profileOverlay'))
                 document.getElementById('profileOverlay').classList.remove('open');
-            }
         }
 
+        // AI Window
+        function toggleAI() {
+            const win = document.getElementById('aiWindow');
+            const btn = document.getElementById('aiToggle');
+            const isOpen = win.classList.contains('open');
+            win.classList.toggle('open', !isOpen);
+            btn.style.display = isOpen ? 'flex' : 'none';
+        }
+
+        function openPersonality() {
+            document.getElementById('personalityInput').value = aiPersonality === "You are a helpful, friendly AI assistant." ? '' : aiPersonality;
+            document.getElementById('personalityOverlay').classList.add('open');
+        }
+
+        function closePersonality(e) {
+            if (e.target === document.getElementById('personalityOverlay'))
+                document.getElementById('personalityOverlay').classList.remove('open');
+        }
+
+        function setPreset(name) {
+            document.getElementById('personalityInput').value = presets[name] === presets.default ? '' : presets[name];
+        }
+
+        function savePersonality() {
+            const val = document.getElementById('personalityInput').value.trim();
+            aiPersonality = val || presets.default;
+            aiHistory = [];
+            document.getElementById('aiMessages').innerHTML = '<div class="ai-msg assistant">Personality updated! Ask me anything 👋</div>';
+            document.getElementById('personalityOverlay').classList.remove('open');
+        }
+
+        async function sendAI() {
+            const input = document.getElementById('aiInput');
+            const text = input.value.trim();
+            if (!text) return;
+            input.value = '';
+
+            appendAIMsg(text, 'user');
+            aiHistory.push({ role: 'user', content: text });
+
+            const typing = appendAIMsg('Thinking...', 'typing');
+
+            const res = await fetch('/ai', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ messages: aiHistory, personality: aiPersonality })
+            });
+            const data = await res.json();
+            typing.remove();
+
+            appendAIMsg(data.reply, 'assistant');
+            aiHistory.push({ role: 'assistant', content: data.reply });
+        }
+
+        function appendAIMsg(text, role) {
+            const div = document.createElement('div');
+            div.classList.add('ai-msg', role);
+            div.textContent = text;
+            const container = document.getElementById('aiMessages');
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+            return div;
+        }
+
+        document.getElementById('aiInput').addEventListener('keypress', e => {
+            if (e.key === 'Enter') sendAI();
+        });
+
+        // Auth
         async function doLogin() {
             const username = document.getElementById("loginUsername").value.trim();
             const password = document.getElementById("loginPassword").value.trim();
@@ -534,6 +792,7 @@
             profile = user;
             document.getElementById("authScreen").style.display = "none";
             document.getElementById("headerAvatar").src = user.avatar;
+            document.getElementById("aiToggle").classList.add('visible');
 
             const res = await fetch('/messages');
             const msgs = await res.json();
@@ -580,15 +839,12 @@
             input.value = "";
         }
 
-        socket.on("message", function(data) {
-            appendMessage(data);
-        });
+        socket.on("message", function(data) { appendMessage(data); });
 
         function appendMessage(data) {
             const messages = document.getElementById("messages");
             const div = document.createElement("div");
             div.classList.add("message");
-
             if (data.system) {
                 div.innerHTML = `<span class="system">${data.content}</span>`;
             } else {
@@ -611,7 +867,6 @@
                     </div>
                 `;
             }
-
             messages.appendChild(div);
             messages.scrollTop = messages.scrollHeight;
         }
