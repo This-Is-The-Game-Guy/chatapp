@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, session
 from flask_socketio import SocketIO, emit
 from werkzeug.security import generate_password_hash, check_password_hash
+from groq import Groq
 import os
 import sqlite3
 import secrets
@@ -8,6 +9,7 @@ import secrets
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
 socketio = SocketIO(app, cors_allowed_origins="*")
+groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 HTML = open(os.path.join(os.path.dirname(__file__), 'templates', 'index.html')).read()
 
@@ -63,7 +65,6 @@ def signup():
     ''', (username, hashed, data.get('bio', ''), data.get('status', 'online'), data.get('avatar', f'https://api.dicebear.com/7.x/bottts/svg?seed={username}')))
     db.commit()
     db.close()
-    session['username'] = username
     return jsonify({"success": True})
 
 @app.route("/login", methods=["POST"])
@@ -76,7 +77,6 @@ def login():
     db.close()
     if not user or not check_password_hash(user['password'], password):
         return jsonify({"success": False, "error": "Wrong username or password"})
-    session['username'] = username
     return jsonify({"success": True, "user": {
         "username": user['username'],
         "bio": user['bio'],
@@ -110,6 +110,21 @@ def get_messages():
     msgs = db.execute('SELECT * FROM messages ORDER BY timestamp DESC LIMIT 50').fetchall()
     db.close()
     return jsonify([dict(m) for m in reversed(msgs)])
+
+@app.route("/ai", methods=["POST"])
+def ai_chat():
+    data = request.json
+    messages = data.get('messages', [])
+    personality = data.get('personality', 'You are a helpful assistant.')
+    try:
+        response = groq_client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "system", "content": personality}] + messages
+        )
+        reply = response.choices[0].message.content
+        return jsonify({"reply": reply})
+    except Exception as e:
+        return jsonify({"reply": f"Error: {str(e)}"})
 
 @socketio.on("message")
 def handle_message(data):
