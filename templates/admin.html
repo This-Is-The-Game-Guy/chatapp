@@ -151,6 +151,7 @@
     <script>
         const params = new URLSearchParams(window.location.search);
         const key = params.get('key');
+        const deletedIds = new Set();
 
         function showToast(msg, color = '#43b581') {
             const t = document.getElementById('toast');
@@ -187,9 +188,13 @@
         async function loadMessages() {
             const res = await fetch(`/admin/messages?key=${key}`);
             const msgs = await res.json();
-            document.getElementById('totalMessages').textContent = msgs.length;
+
+            // Only show messages that haven't been deleted
+            const filtered = msgs.filter(m => !deletedIds.has(m.id));
+            document.getElementById('totalMessages').textContent = filtered.length;
+
             const tbody = document.getElementById('messagesTable');
-            tbody.innerHTML = msgs.reverse().map(m => `
+            tbody.innerHTML = filtered.reverse().map(m => `
                 <tr id="msg-${m.id}">
                     <td><strong>${m.username}</strong></td>
                     <td class="msg-content" title="${m.content}">${m.content}</td>
@@ -231,26 +236,34 @@
         }
 
         async function deleteMessage(id) {
-    if (!confirm('Delete this message?')) return;
-    await fetch('/admin/delete_message', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key, id })
-    });
-    const row = document.getElementById(`msg-${id}`);
-    if (row) row.remove();
-    showToast('Message deleted!', '#f04747');
-}
-        
+            if (!confirm('Delete this message?')) return;
 
+            // Track deleted id so it doesn't come back on refresh
+            deletedIds.add(id);
+
+            // Remove from UI instantly
+            const row = document.getElementById(`msg-${id}`);
+            if (row) row.remove();
+
+            // Delete from server
+            await fetch('/admin/delete_message', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key, id })
+            });
+
+            showToast('Message deleted!', '#f04747');
+        }
+
+        // Initial load
         loadUsers();
-loadMessages();
+        loadMessages();
 
-// Auto refresh every 5 seconds
-setInterval(() => {
-    loadUsers();
-    loadMessages();
-}, 1000);
+        // Auto refresh every 3 seconds
+        setInterval(() => {
+            loadUsers();
+            loadMessages();
+        }, 3000);
     </script>
 </body>
 </html>
