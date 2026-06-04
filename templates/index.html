@@ -270,8 +270,6 @@
             text-align: left;
         }
         .save-btn { width: 100%; padding: 12px; margin-top: 4px; }
-
-        /* AI Floating Window */
         .ai-window {
             position: fixed;
             bottom: 20px;
@@ -674,7 +672,6 @@
                 document.getElementById('profileOverlay').classList.remove('open');
         }
 
-        // Admin
         function openAdmin() {
             const key = prompt('Enter admin key:');
             if (key) window.open(`/admin?key=${key}`, '_blank');
@@ -779,24 +776,9 @@
             document.getElementById("headerAvatar").src = user.avatar;
             document.getElementById("aiToggle").classList.add('visible');
 
-            // Show admin button only for Indian_IV
             if (user.username === 'Indian_IV') {
                 document.getElementById('adminBtn').style.display = 'flex';
             }
-
-            // Handle kick events
-            socket.on('kicked', (data) => {
-                if (data.username === profile.username) {
-                    alert('You have been kicked from the chat!');
-                    location.reload();
-                }
-            });
-
-            // Handle message deleted events
-            socket.on('message_deleted', (data) => {
-                const el = document.getElementById(`msg-${data.id}`);
-                if (el) el.remove();
-            });
 
             const res = await fetch('/messages');
             const msgs = await res.json();
@@ -844,7 +826,20 @@
             input.value = "";
         }
 
+        // All socket listeners outside enterChat
         socket.on("message", function(data) { appendMessage(data); });
+
+        socket.on('kicked', (data) => {
+            if (data.username === profile.username) {
+                alert('You have been kicked from the chat!');
+                location.reload();
+            }
+        });
+
+        socket.on('message_deleted', (data) => {
+            const el = document.getElementById(`msg-${data.id}`);
+            if (el) el.remove();
+        });
 
         function appendMessage(data) {
             const messages = document.getElementById("messages");
