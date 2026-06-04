@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat App</title>
+    <title>\\BEST CHAT//</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -55,7 +55,6 @@
             border-radius: 50%;
             object-fit: cover;
             flex-shrink: 0;
-            position: relative;
         }
         .avatar-wrapper {
             position: relative;
@@ -135,8 +134,6 @@
             font-weight: bold;
         }
         button:hover { background: #5b6eae; }
-
-        /* Join / Profile Screen */
         .screen {
             position: fixed;
             top: 0; left: 0;
@@ -160,8 +157,7 @@
         .profile-box h2 { color: white; text-align: center; font-size: 22px; }
         .profile-box p { color: #72767d; text-align: center; font-size: 13px; }
         .profile-box input[type="text"],
-        .profile-box textarea,
-        .profile-box select {
+        .profile-box textarea {
             padding: 12px 16px;
             border-radius: 8px;
             border: none;
@@ -182,10 +178,7 @@
             text-transform: uppercase;
             letter-spacing: 1px;
         }
-        .profile-box button {
-            width: 100%;
-            padding: 14px;
-        }
+        .profile-box button { width: 100%; padding: 14px; }
         .avatar-upload {
             display: flex;
             flex-direction: column;
@@ -207,10 +200,7 @@
             padding: 8px 16px;
             width: auto !important;
         }
-        .status-options {
-            display: flex;
-            gap: 10px;
-        }
+        .status-options { display: flex; gap: 10px; }
         .status-option {
             flex: 1;
             padding: 10px;
@@ -231,28 +221,23 @@
 </head>
 <body>
 
-    <!-- Profile Setup Screen -->
     <div class="screen" id="profileScreen">
         <div class="profile-box">
             <h2>✨ Create Your Profile</h2>
             <p>Set up your profile before joining</p>
-
             <div class="avatar-upload">
                 <img id="avatarPreview" class="avatar-preview" src="https://api.dicebear.com/7.x/bottts/svg?seed=default" />
                 <input type="file" id="avatarInput" accept="image/*" style="display:none" />
                 <button class="upload-btn" onclick="document.getElementById('avatarInput').click()">📷 Upload Photo</button>
             </div>
-
             <div>
                 <label>Username</label>
                 <input type="text" id="usernameInput" placeholder="Your username..." />
             </div>
-
             <div>
                 <label>Bio</label>
                 <textarea id="bioInput" placeholder="Tell us about yourself..."></textarea>
             </div>
-
             <div>
                 <label>Status</label>
                 <div class="status-options">
@@ -261,15 +246,13 @@
                     <div class="status-option" data-status="away" onclick="selectStatus(this)">🟡 Away</div>
                 </div>
             </div>
-
             <button onclick="joinChat()">Join Chat 🚀</button>
         </div>
     </div>
 
-    <!-- Chat -->
     <div class="container">
         <div class="header">
-            💬 general <span>A real time chat room</span>
+            💬 General <span>Real time chat room</span>
         </div>
         <div class="messages" id="messages"></div>
         <div class="input-area">
@@ -289,7 +272,23 @@
             away: "#faa61a"
         };
 
-        // Avatar upload preview
+        // Auto load profile on page open
+        window.addEventListener('load', async () => {
+            const saved = localStorage.getItem('chatUsername');
+            if (saved) {
+                const res = await fetch(`/profile/${saved}`);
+                const data = await res.json();
+                if (data) {
+                    profile = data;
+                    document.getElementById("usernameInput").value = data.username;
+                    document.getElementById("bioInput").value = data.bio || '';
+                    document.getElementById("avatarPreview").src = data.avatar;
+                    const statusEl = document.querySelector(`[data-status="${data.status}"]`);
+                    if (statusEl) selectStatus(statusEl);
+                }
+            }
+        });
+
         document.getElementById("avatarInput").addEventListener("change", function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -307,7 +306,7 @@
             selectedStatus = el.dataset.status;
         }
 
-        function joinChat() {
+        async function joinChat() {
             const username = document.getElementById("usernameInput").value.trim();
             const bio = document.getElementById("bioInput").value.trim();
             if (!username) return;
@@ -319,7 +318,25 @@
                 profile.avatar = `https://api.dicebear.com/7.x/bottts/svg?seed=${username}`;
             }
 
+            localStorage.setItem('chatUsername', username);
+
+            await fetch('/profile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(profile)
+            });
+
             document.getElementById("profileScreen").style.display = "none";
+
+            const res = await fetch('/messages');
+            const msgs = await res.json();
+            msgs.forEach(m => appendMessage({
+                username: m.username,
+                content: m.content,
+                system: false,
+                avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${m.username}`,
+                status: 'online'
+            }));
 
             socket.emit("message", {
                 username: "System",
@@ -328,11 +345,11 @@
             });
         }
 
-        document.getElementById("usernameInput").addEventListener("keypress", function(e) {
+        document.getElementById("usernameInput").addEventListener("keypress", e => {
             if (e.key === "Enter") joinChat();
         });
 
-        document.getElementById("messageInput").addEventListener("keypress", function(e) {
+        document.getElementById("messageInput").addEventListener("keypress", e => {
             if (e.key === "Enter") sendMessage();
         });
 
@@ -340,7 +357,6 @@
             const input = document.getElementById("messageInput");
             const content = input.value.trim();
             if (!content || !profile.username) return;
-
             socket.emit("message", {
                 username: profile.username,
                 bio: profile.bio,
@@ -353,6 +369,10 @@
         }
 
         socket.on("message", function(data) {
+            appendMessage(data);
+        });
+
+        function appendMessage(data) {
             const messages = document.getElementById("messages");
             const div = document.createElement("div");
             div.classList.add("message");
@@ -380,7 +400,7 @@
 
             messages.appendChild(div);
             messages.scrollTop = messages.scrollHeight;
-        });
+        }
     </script>
 </body>
 </html>
