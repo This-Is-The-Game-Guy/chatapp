@@ -368,12 +368,7 @@
             font-size: 14px;
             outline: none;
         }
-        .ai-input-area button {
-            padding: 10px 14px;
-            font-size: 14px;
-        }
-
-        /* Personality Modal */
+        .ai-input-area button { padding: 10px 14px; font-size: 14px; }
         .personality-modal {
             background: #2f3136;
             border-radius: 12px;
@@ -400,11 +395,7 @@
             resize: none;
             font-family: 'Segoe UI', sans-serif;
         }
-        .preset-btns {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
+        .preset-btns { display: flex; flex-wrap: wrap; gap: 8px; }
         .preset-btn {
             background: #40444b;
             color: #dcddde;
@@ -416,8 +407,6 @@
             width: auto;
         }
         .preset-btn:hover { background: #4f5660; }
-
-        /* AI toggle button */
         .ai-toggle {
             position: fixed;
             bottom: 20px;
@@ -552,14 +541,15 @@
         </div>
     </div>
 
-    <!-- AI Toggle Button (shows when window is closed) -->
+    <!-- AI Toggle Button -->
     <button class="ai-toggle" id="aiToggle" onclick="toggleAI()">🤖</button>
 
     <!-- Chat -->
     <div class="container">
         <div class="header">
-             🌐 Worldwide <span>Across-the-world chatting</span>
+            🌐 Worldwide <span>Across-the-world chatting</span>
             <div class="header-right">
+                <button class="icon-btn" id="adminBtn" style="display:none" onclick="openAdmin()">🛡️</button>
                 <button class="icon-btn" onclick="openSettings()">⚙️</button>
                 <img id="headerAvatar" class="header-avatar" src="" onclick="openSettings()" />
             </div>
@@ -589,10 +579,9 @@
             pirate: "You are a pirate. You speak entirely in pirate slang and always reference the sea, treasure, and sailing. Yarr!",
             roast: "You are a roast bot. You gently roast everything the user says in a funny, lighthearted way. Never be mean, just playfully sarcastic.",
             shakespeare: "You are Shakespeare. You respond entirely in Early Modern English, using thee, thou, dost, and other Shakespearean language.",
-            teacher: "You are a knowlegeable teacher, who is very learned. You can explain things in great detail, and always ready to help."
+            teacher: "You are a knowledgeable teacher, who is very learned. You can explain things in great detail, and always ready to help."
         };
 
-        // Tab switching
         function switchTab(tab) {
             document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
             document.getElementById('signupForm').style.display = tab === 'signup' ? 'block' : 'none';
@@ -607,7 +596,6 @@
             el.style.display = msg ? 'block' : 'none';
         }
 
-        // Avatar uploads
         document.getElementById("avatarInput").addEventListener("change", function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -630,7 +618,6 @@
             reader.readAsDataURL(file);
         });
 
-        // Status selection
         function selectStatus(el, context) {
             const parent = el.closest('.status-options');
             parent.querySelectorAll('.status-option').forEach(o => o.classList.remove('selected'));
@@ -639,7 +626,6 @@
             if (context === 'settings') selectedSettingsStatus = el.dataset.status;
         }
 
-        // Settings
         function openSettings() {
             document.getElementById('settingsBio').value = profile.bio || '';
             document.getElementById('settingsAvatarPreview').src = profile.avatar;
@@ -671,7 +657,6 @@
             document.getElementById('settingsOverlay').classList.remove('open');
         }
 
-        // Profile popup
         async function showProfile(username) {
             const res = await fetch(`/profile/${username}`);
             const data = await res.json();
@@ -689,7 +674,12 @@
                 document.getElementById('profileOverlay').classList.remove('open');
         }
 
-        // AI Window
+        // Admin
+        function openAdmin() {
+            const key = prompt('Enter admin key:');
+            if (key) window.open(`/admin?key=${key}`, '_blank');
+        }
+
         function toggleAI() {
             const win = document.getElementById('aiWindow');
             const btn = document.getElementById('aiToggle');
@@ -725,12 +715,9 @@
             const text = input.value.trim();
             if (!text) return;
             input.value = '';
-
             appendAIMsg(text, 'user');
             aiHistory.push({ role: 'user', content: text });
-
             const typing = appendAIMsg('Thinking...', 'typing');
-
             const res = await fetch('/ai', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -738,7 +725,6 @@
             });
             const data = await res.json();
             typing.remove();
-
             appendAIMsg(data.reply, 'assistant');
             aiHistory.push({ role: 'assistant', content: data.reply });
         }
@@ -757,7 +743,6 @@
             if (e.key === 'Enter') sendAI();
         });
 
-        // Auth
         async function doLogin() {
             const username = document.getElementById("loginUsername").value.trim();
             const password = document.getElementById("loginPassword").value.trim();
@@ -794,6 +779,25 @@
             document.getElementById("headerAvatar").src = user.avatar;
             document.getElementById("aiToggle").classList.add('visible');
 
+            // Show admin button only for Indian_IV
+            if (user.username === 'Indian_IV') {
+                document.getElementById('adminBtn').style.display = 'flex';
+            }
+
+            // Handle kick events
+            socket.on('kicked', (data) => {
+                if (data.username === profile.username) {
+                    alert('You have been kicked from the chat!');
+                    location.reload();
+                }
+            });
+
+            // Handle message deleted events
+            socket.on('message_deleted', (data) => {
+                const el = document.getElementById(`msg-${data.id}`);
+                if (el) el.remove();
+            });
+
             const res = await fetch('/messages');
             const msgs = await res.json();
             msgs.forEach(m => {
@@ -805,7 +809,8 @@
                         system: false,
                         avatar: p ? p.avatar : `https://api.dicebear.com/7.x/bottts/svg?seed=${m.username}`,
                         status: p ? p.status : 'online',
-                        bio: p ? p.bio : ''
+                        bio: p ? p.bio : '',
+                        id: m.id
                     }));
             });
 
@@ -845,6 +850,7 @@
             const messages = document.getElementById("messages");
             const div = document.createElement("div");
             div.classList.add("message");
+            if (data.id) div.id = `msg-${data.id}`;
             if (data.system) {
                 div.innerHTML = `<span class="system">${data.content}</span>`;
             } else {

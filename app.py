@@ -11,7 +11,10 @@ app.secret_key = secrets.token_hex(16)
 socketio = SocketIO(app, cors_allowed_origins="*")
 groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
+ADMIN_USERNAME = "Indian_IV"
+
 HTML = open(os.path.join(os.path.dirname(__file__), 'templates', 'index.html')).read()
+ADMIN_HTML = open(os.path.join(os.path.dirname(__file__), 'templates', 'admin.html')).read()
 
 def get_db():
     db = sqlite3.connect('chat.db')
@@ -26,7 +29,8 @@ def init_db():
             password TEXT,
             bio TEXT,
             status TEXT,
-            avatar TEXT
+            avatar TEXT,
+            banned INTEGER DEFAULT 0
         )
     ''')
     db.execute('''
@@ -37,6 +41,11 @@ def init_db():
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+    # Add banned column if it doesn't exist yet
+    try:
+        db.execute('ALTER TABLE users ADD COLUMN banned INTEGER DEFAULT 0')
+    except:
+        pass
     db.commit()
     db.close()
 
@@ -45,6 +54,13 @@ init_db()
 @app.route("/")
 def home():
     return HTML
+
+@app.route("/admin")
+def admin():
+    admin_key = request.args.get('key')
+    if admin_key != os.environ.get('ADMIN_KEY', 'supersecret'):
+        return "403 Forbidden", 403
+    return ADMIN_HTML
 
 @app.route("/signup", methods=["POST"])
 def signup():
@@ -60,8 +76,8 @@ def signup():
         return jsonify({"success": False, "error": "Username already taken"})
     hashed = generate_password_hash(password)
     db.execute('''
-        INSERT INTO users (username, password, bio, status, avatar)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO users (username, password, bio, status, avatar, banned)
+        VALUES (?, ?, ?, ?, ?, 0)
     ''', (username, hashed, data.get('bio', ''), data.get('status', 'online'), data.get('avatar', f'https://api.dicebear.com/7.x/bottts/svg?seed={username}')))
     db.commit()
     db.close()
@@ -77,6 +93,8 @@ def login():
     db.close()
     if not user or not check_password_hash(user['password'], password):
         return jsonify({"success": False, "error": "Wrong username or password"})
+    if user['banned']:
+        return jsonify({"success": False, "error": "You have been banned from this chat."})
     return jsonify({"success": True, "user": {
         "username": user['username'],
         "bio": user['bio'],
@@ -88,9 +106,8 @@ def login():
 def save_profile():
     data = request.json
     db = get_db()
-    db.execute('''
-        UPDATE users SET bio=?, status=?, avatar=? WHERE username=?
-    ''', (data['bio'], data['status'], data['avatar'], data['username']))
+    db.execute('UPDATE users SET bio=?, status=?, avatar=? WHERE username=?',
+               (data['bio'], data['status'], data['avatar'], data['username']))
     db.commit()
     db.close()
     return jsonify({"success": True})
@@ -125,6 +142,68 @@ def ai_chat():
         return jsonify({"reply": reply})
     except Exception as e:
         return jsonify({"reply": f"Error: {str(e)}"})
+
+# Admin routes
+@app.route("/admin/users", methods=["GET"])
+def admin_users():
+    if request.args.get('key') != os.environ.get('ADMIN_KEY', 'supersecret'):
+        return jsonify({"error": "Forbidden"}), 403
+    db = get_db()
+    users = db.execute('SELECT username, bio, status, banned FROM users').fetchall()
+    db.close()
+    return jsonify([dict(u) for u in users])
+
+@app.route("/admin/messages", methods=["GET"])
+def admin_messages():
+    if request.args.get('key') != os.environ.get('ADMIN_KEY', 'supersecret'):
+        return jsonify({"error": "Forbidden"}), 403
+    db = get_db()
+    msgs = db.execute('SELECT * FROM messages ORDER BY timestamp DESC LIMIT 100').fetchall()
+    db.close()
+    return jsonify([dict(m) for m in msgs])
+
+@app.route("/admin/ban", methods=["POST"])
+def admin_ban():
+    if request.json.get('key') != os.environ.get('ADMIN_KEY', 'supersecret'):
+        return jsonify({"error": "Forbidden"}), 403
+    username = request.json.get('username')
+    db = get_db()
+    db.execute('UPDATE users SET banned=1 WHERE username=?', (username,))
+    db.commit()
+    db.close()
+    socketio.emit('kicked', {'username': username})
+    return jsonify({"success": True})
+
+@app.route("/admin/unban", methods=["POST"])
+def admin_unban():
+    if request.json.get('key') != os.environ.get('ADMIN_KEY', 'supersecret'):
+        return jsonify({"error": "Forbidden"}), 403
+    username = request.json.get('username')
+    db = get_db()
+    db.execute('UPDATE users SET banned=0 WHERE username=?', (username,))
+    db.commit()
+    db.close()
+    return jsonify({"success": True})
+
+@app.route("/admin/kick", methods=["POST"])
+def admin_kick():
+    if request.json.get('key') != os.environ.get('ADMIN_KEY', 'supersecret'):
+        return jsonify({"error": "Forbidden"}), 403
+    username = request.json.get('username')
+    socketio.emit('kicked', {'username': username})
+    return jsonify({"success": True})
+
+@app.route("/admin/delete_message", methods=["POST"])
+def admin_delete_message():
+    if request.json.get('key') != os.environ.get('ADMIN_KEY', 'supersecret'):
+        return jsonify({"error": "Forbidden"}), 403
+    msg_id = request.json.get('id')
+    db = get_db()
+    db.execute('DELETE FROM messages WHERE id=?', (msg_id,))
+    db.commit()
+    db.close()
+    socketio.emit('message_deleted', {'id': msg_id})
+    return jsonify({"success": True})
 
 @socketio.on("message")
 def handle_message(data):
