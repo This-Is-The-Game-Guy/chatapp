@@ -65,46 +65,16 @@
             height: 12px;
             border-radius: 50%;
             position: absolute;
-            bottom: 0;
-            right: 0;
+            bottom: 0; right: 0;
             border: 2px solid #2f3136;
         }
-        .message-body {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-        .message-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .username {
-            font-size: 14px;
-            font-weight: bold;
-            color: #7289da;
-        }
-        .timestamp {
-            font-size: 11px;
-            color: #72767d;
-        }
-        .content {
-            color: #dcddde;
-            font-size: 14px;
-            line-height: 1.5;
-        }
-        .bio-tag {
-            font-size: 11px;
-            color: #72767d;
-            font-style: italic;
-        }
-        .system {
-            color: #72767d;
-            font-size: 13px;
-            font-style: italic;
-            text-align: center;
-            width: 100%;
-        }
+        .message-body { display: flex; flex-direction: column; gap: 2px; }
+        .message-header { display: flex; align-items: center; gap: 8px; }
+        .username { font-size: 14px; font-weight: bold; color: #7289da; }
+        .timestamp { font-size: 11px; color: #72767d; }
+        .content { color: #dcddde; font-size: 14px; line-height: 1.5; }
+        .bio-tag { font-size: 11px; color: #72767d; font-style: italic; }
+        .system { color: #72767d; font-size: 13px; font-style: italic; text-align: center; width: 100%; }
         .input-area {
             padding: 16px;
             background: #2f3136;
@@ -112,7 +82,7 @@
             gap: 10px;
             align-items: center;
         }
-        input[type="text"] {
+        input[type="text"], input[type="password"] {
             flex: 1;
             padding: 12px 16px;
             border-radius: 8px;
@@ -122,7 +92,8 @@
             font-size: 14px;
             outline: none;
         }
-        input[type="text"]::placeholder { color: #72767d; }
+        input[type="text"]::placeholder,
+        input[type="password"]::placeholder { color: #72767d; }
         button {
             background: #7289da;
             color: white;
@@ -144,7 +115,7 @@
             align-items: center;
             z-index: 10;
         }
-        .profile-box {
+        .auth-box {
             background: #2f3136;
             padding: 40px;
             border-radius: 12px;
@@ -154,10 +125,12 @@
             width: 380px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.5);
         }
-        .profile-box h2 { color: white; text-align: center; font-size: 22px; }
-        .profile-box p { color: #72767d; text-align: center; font-size: 13px; }
-        .profile-box input[type="text"],
-        .profile-box textarea {
+        .auth-box h2 { color: white; text-align: center; font-size: 22px; }
+        .auth-box p { color: #72767d; text-align: center; font-size: 13px; }
+        .auth-box label { color: #72767d; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+        .auth-box input[type="text"],
+        .auth-box input[type="password"],
+        .auth-box textarea {
             padding: 12px 16px;
             border-radius: 8px;
             border: none;
@@ -168,26 +141,24 @@
             width: 100%;
             font-family: 'Segoe UI', sans-serif;
         }
-        .profile-box textarea {
-            resize: none;
-            height: 80px;
+        .auth-box textarea { resize: none; height: 70px; }
+        .auth-box button { width: 100%; padding: 14px; }
+        .switch-link {
+            color: #7289da;
+            text-align: center;
+            font-size: 13px;
+            cursor: pointer;
+            text-decoration: underline;
         }
-        .profile-box label {
-            color: #72767d;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+        .error-msg {
+            color: #f04747;
+            font-size: 13px;
+            text-align: center;
+            display: none;
         }
-        .profile-box button { width: 100%; padding: 14px; }
-        .avatar-upload {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-        }
+        .avatar-upload { display: flex; flex-direction: column; align-items: center; gap: 10px; }
         .avatar-preview {
-            width: 80px;
-            height: 80px;
+            width: 80px; height: 80px;
             border-radius: 50%;
             object-fit: cover;
             border: 3px solid #7289da;
@@ -202,8 +173,7 @@
         }
         .status-options { display: flex; gap: 10px; }
         .status-option {
-            flex: 1;
-            padding: 10px;
+            flex: 1; padding: 10px;
             border-radius: 8px;
             background: #40444b;
             color: #dcddde;
@@ -213,43 +183,87 @@
             border: 2px solid transparent;
             transition: all 0.2s;
         }
-        .status-option.selected {
-            border-color: #7289da;
-            background: #3d4a6b;
+        .status-option.selected { border-color: #7289da; background: #3d4a6b; }
+        .tabs { display: flex; gap: 10px; }
+        .tab {
+            flex: 1; padding: 10px;
+            border-radius: 8px;
+            background: #40444b;
+            color: #72767d;
+            font-size: 14px;
+            text-align: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+            font-weight: bold;
         }
+        .tab.active { border-color: #7289da; color: white; background: #3d4a6b; }
     </style>
 </head>
 <body>
 
-    <div class="screen" id="profileScreen">
-        <div class="profile-box">
-            <h2>✨ Create Your Profile</h2>
-            <p>Set up your profile before joining</p>
-            <div class="avatar-upload">
-                <img id="avatarPreview" class="avatar-preview" src="https://api.dicebear.com/7.x/bottts/svg?seed=default" />
-                <input type="file" id="avatarInput" accept="image/*" style="display:none" />
-                <button class="upload-btn" onclick="document.getElementById('avatarInput').click()">📷 Upload Photo</button>
+    <!-- Auth Screen -->
+    <div class="screen" id="authScreen">
+        <div class="auth-box">
+            <h2>💬 BEST CHAT</h2>
+
+            <div class="tabs">
+                <div class="tab active" id="loginTab" onclick="switchTab('login')">Log In</div>
+                <div class="tab" id="signupTab" onclick="switchTab('signup')">Sign Up</div>
             </div>
-            <div>
-                <label>Username</label>
-                <input type="text" id="usernameInput" placeholder="Your username..." />
-            </div>
-            <div>
-                <label>Bio</label>
-                <textarea id="bioInput" placeholder="Tell us about yourself..."></textarea>
-            </div>
-            <div>
-                <label>Status</label>
-                <div class="status-options">
-                    <div class="status-option selected" data-status="online" onclick="selectStatus(this)">🟢 Online</div>
-                    <div class="status-option" data-status="busy" onclick="selectStatus(this)">🔴 Busy</div>
-                    <div class="status-option" data-status="away" onclick="selectStatus(this)">🟡 Away</div>
+
+            <div id="errorMsg" class="error-msg"></div>
+
+            <!-- Login Form -->
+            <div id="loginForm">
+                <div style="display:flex;flex-direction:column;gap:12px">
+                    <div>
+                        <label>Username</label>
+                        <input type="text" id="loginUsername" placeholder="Your username..." />
+                    </div>
+                    <div>
+                        <label>Password</label>
+                        <input type="password" id="loginPassword" placeholder="Your password..." />
+                    </div>
+                    <button onclick="doLogin()">Log In 🚀</button>
                 </div>
             </div>
-            <button onclick="joinChat()">Join Chat 🚀</button>
+
+            <!-- Signup Form -->
+            <div id="signupForm" style="display:none">
+                <div style="display:flex;flex-direction:column;gap:12px">
+                    <div class="avatar-upload">
+                        <img id="avatarPreview" class="avatar-preview" src="https://api.dicebear.com/7.x/bottts/svg?seed=default" />
+                        <input type="file" id="avatarInput" accept="image/*" style="display:none" />
+                        <button class="upload-btn" onclick="document.getElementById('avatarInput').click()">📷 Upload Photo</button>
+                    </div>
+                    <div>
+                        <label>Username</label>
+                        <input type="text" id="signupUsername" placeholder="Pick a username..." />
+                    </div>
+                    <div>
+                        <label>Password</label>
+                        <input type="password" id="signupPassword" placeholder="Create a password..." />
+                    </div>
+                    <div>
+                        <label>Bio</label>
+                        <textarea id="signupBio" placeholder="Tell us about yourself..."></textarea>
+                    </div>
+                    <div>
+                        <label>Status</label>
+                        <div class="status-options">
+                            <div class="status-option selected" data-status="online" onclick="selectStatus(this)">🟢 Online</div>
+                            <div class="status-option" data-status="busy" onclick="selectStatus(this)">🔴 Busy</div>
+                            <div class="status-option" data-status="away" onclick="selectStatus(this)">🟡 Away</div>
+                        </div>
+                    </div>
+                    <button onclick="doSignup()">Create Account 🎉</button>
+                </div>
+            </div>
+
         </div>
     </div>
 
+    <!-- Chat -->
     <div class="container">
         <div class="header">
             💬 General <span>Real time chat room</span>
@@ -263,8 +277,9 @@
 
     <script>
         const socket = io();
-        let profile = { username: "", bio: "", status: "online", avatar: "" };
+        let profile = {};
         let selectedStatus = "online";
+        let avatarData = "";
 
         const statusColors = {
             online: "#43b581",
@@ -272,22 +287,19 @@
             away: "#faa61a"
         };
 
-        // Auto load profile on page open
-        window.addEventListener('load', async () => {
-            const saved = localStorage.getItem('chatUsername');
-            if (saved) {
-                const res = await fetch(`/profile/${saved}`);
-                const data = await res.json();
-                if (data) {
-                    profile = data;
-                    document.getElementById("usernameInput").value = data.username;
-                    document.getElementById("bioInput").value = data.bio || '';
-                    document.getElementById("avatarPreview").src = data.avatar;
-                    const statusEl = document.querySelector(`[data-status="${data.status}"]`);
-                    if (statusEl) selectStatus(statusEl);
-                }
-            }
-        });
+        function switchTab(tab) {
+            document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+            document.getElementById('signupForm').style.display = tab === 'signup' ? 'block' : 'none';
+            document.getElementById('loginTab').classList.toggle('active', tab === 'login');
+            document.getElementById('signupTab').classList.toggle('active', tab === 'signup');
+            showError('');
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('errorMsg');
+            el.textContent = msg;
+            el.style.display = msg ? 'block' : 'none';
+        }
 
         document.getElementById("avatarInput").addEventListener("change", function(e) {
             const file = e.target.files[0];
@@ -295,7 +307,7 @@
             const reader = new FileReader();
             reader.onload = (ev) => {
                 document.getElementById("avatarPreview").src = ev.target.result;
-                profile.avatar = ev.target.result;
+                avatarData = ev.target.result;
             };
             reader.readAsDataURL(file);
         });
@@ -306,47 +318,68 @@
             selectedStatus = el.dataset.status;
         }
 
-        async function joinChat() {
-            const username = document.getElementById("usernameInput").value.trim();
-            const bio = document.getElementById("bioInput").value.trim();
-            if (!username) return;
+        async function doLogin() {
+            const username = document.getElementById("loginUsername").value.trim();
+            const password = document.getElementById("loginPassword").value.trim();
+            if (!username || !password) return showError("Please fill in all fields");
 
-            profile.username = username;
-            profile.bio = bio;
-            profile.status = selectedStatus;
-            if (!profile.avatar) {
-                profile.avatar = `https://api.dicebear.com/7.x/bottts/svg?seed=${username}`;
-            }
-
-            localStorage.setItem('chatUsername', username);
-
-            await fetch('/profile', {
+            const res = await fetch('/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(profile)
+                body: JSON.stringify({ username, password })
             });
+            const data = await res.json();
+            if (!data.success) return showError(data.error);
+            enterChat(data.user);
+        }
 
-            document.getElementById("profileScreen").style.display = "none";
+        async function doSignup() {
+            const username = document.getElementById("signupUsername").value.trim();
+            const password = document.getElementById("signupPassword").value.trim();
+            const bio = document.getElementById("signupBio").value.trim();
+            if (!username || !password) return showError("Username and password required");
+
+            const avatar = avatarData || `https://api.dicebear.com/7.x/bottts/svg?seed=${username}`;
+
+            const res = await fetch('/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password, bio, status: selectedStatus, avatar })
+            });
+            const data = await res.json();
+            if (!data.success) return showError(data.error);
+            enterChat({ username, bio, status: selectedStatus, avatar });
+        }
+
+        async function enterChat(user) {
+            profile = user;
+            localStorage.setItem('chatUsername', user.username);
+            document.getElementById("authScreen").style.display = "none";
 
             const res = await fetch('/messages');
             const msgs = await res.json();
-            msgs.forEach(m => appendMessage({
-                username: m.username,
-                content: m.content,
-                system: false,
-                avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${m.username}`,
-                status: 'online'
-            }));
+            msgs.forEach(m => {
+                fetch(`/profile/${m.username}`)
+                    .then(r => r.json())
+                    .then(p => appendMessage({
+                        username: m.username,
+                        content: m.content,
+                        system: false,
+                        avatar: p ? p.avatar : `https://api.dicebear.com/7.x/bottts/svg?seed=${m.username}`,
+                        status: p ? p.status : 'online',
+                        bio: p ? p.bio : ''
+                    }));
+            });
 
             socket.emit("message", {
                 username: "System",
-                content: `${username} joined the chat! 👋`,
+                content: `${user.username} joined the chat! 👋`,
                 system: true
             });
         }
 
-        document.getElementById("usernameInput").addEventListener("keypress", e => {
-            if (e.key === "Enter") joinChat();
+        document.getElementById("loginPassword").addEventListener("keypress", e => {
+            if (e.key === "Enter") doLogin();
         });
 
         document.getElementById("messageInput").addEventListener("keypress", e => {
