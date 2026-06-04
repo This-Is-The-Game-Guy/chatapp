@@ -242,7 +242,13 @@
         }
 
         loadUsers();
-        loadMessages();
+loadMessages();
+
+// Auto refresh every 5 seconds
+setInterval(() => {
+    loadUsers();
+    loadMessages();
+}, 1000);
     </script>
 </body>
 </html>
