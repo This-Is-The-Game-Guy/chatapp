@@ -857,7 +857,7 @@ function appendMessage(data) {
     const div = document.createElement("div");
     div.classList.add("message");
     if (data.id) div.id = `msg-${data.id}`;
-    if (data.system) {
+   if (data.system) {
         div.innerHTML = `<span class="system">${data.content}</span>`;
     } else {
         const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -882,3 +882,7 @@ function appendMessage(data) {
     messages.appendChild(div);
     messages.scrollTop = messages.scrollHeight;
 }
+    </script>
+</body>
+</html>
+    
