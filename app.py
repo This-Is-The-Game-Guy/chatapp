@@ -41,7 +41,6 @@ def init_db():
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     ''')
-    # Add banned column if it doesn't exist yet
     try:
         db.execute('ALTER TABLE users ADD COLUMN banned INTEGER DEFAULT 0')
     except:
@@ -143,7 +142,6 @@ def ai_chat():
     except Exception as e:
         return jsonify({"reply": f"Error: {str(e)}"})
 
-# Admin routes
 @app.route("/admin/users", methods=["GET"])
 def admin_users():
     if request.args.get('key') != os.environ.get('ADMIN_KEY', 'supersecret'):
@@ -213,23 +211,7 @@ def handle_message(data):
                    (data['username'], data['content']))
         db.commit()
         db.close()
-    @socketio.on("message")
-def handle_message(data):
-    if not data.get('system'):
-        db = get_db()
-        db.execute('INSERT INTO messages (username, content) VALUES (?, ?)',
-                   (data['username'], data['content']))
-        db.commit()
-        db.close()
     emit("message", data, broadcast=True)
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8080))
-    socketio.run(app, host="0.0.0.0", port=port, debug=False, allow_unsafe_werkzeug=True)
-    const el = document.getElementById(`msg-${data.id}`);
-    console.log('Element found:', el);
-    if (el) el.remove();
-});
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
