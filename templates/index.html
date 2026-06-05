@@ -14,7 +14,84 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
+            gap: 16px;
         }
+
+        /* Sidebar */
+        .sidebar {
+            width: 180px;
+            height: 650px;
+            background: #2f3136;
+            border-radius: 12px;
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            padding: 20px 14px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        .sidebar.visible { display: flex; }
+        .sidebar-title {
+            color: #72767d;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .sidebar-card {
+            background: #202225;
+            border-radius: 10px;
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .sidebar-card .value {
+            color: white;
+            font-size: 22px;
+            font-weight: bold;
+        }
+        .sidebar-card .label {
+            color: #72767d;
+            font-size: 12px;
+        }
+        .online-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .online-user {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            border-radius: 8px;
+            background: #202225;
+        }
+        .online-user img {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .online-user span {
+            color: #dcddde;
+            font-size: 13px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .online-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #43b581;
+            flex-shrink: 0;
+        }
+
+        /* Chat container */
         .container {
             width: 500px;
             height: 650px;
@@ -542,6 +619,33 @@
     <!-- AI Toggle Button -->
     <button class="ai-toggle" id="aiToggle" onclick="toggleAI()">🤖</button>
 
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div>
+            <div class="sidebar-title">📊 Info</div>
+            <div class="sidebar-card">
+                <div class="value" id="sidebarTime">--:--</div>
+                <div class="label">Time</div>
+            </div>
+        </div>
+        <div class="sidebar-card">
+            <div class="value" id="sidebarDate">---</div>
+            <div class="label">Date</div>
+        </div>
+        <div class="sidebar-card">
+            <div class="value" id="sidebarBattery">--</div>
+            <div class="label">Battery</div>
+        </div>
+        <div class="sidebar-card">
+            <div class="value" id="sidebarOnlineCount">0</div>
+            <div class="label">Online</div>
+        </div>
+        <div>
+            <div class="sidebar-title" style="margin-top:4px">👥 Users</div>
+            <div class="online-list" id="onlineList"></div>
+        </div>
+    </div>
+
     <!-- Chat -->
     <div class="container">
         <div class="header">
@@ -561,328 +665,375 @@
 
     <script>
         const socket = io();
-let profile = {};
-let selectedStatus = "online";
-let selectedSettingsStatus = "online";
-let avatarData = "";
-let settingsAvatarData = "";
-let aiHistory = [];
-let aiPersonality = "You are a helpful, friendly AI assistant.";
-let knownMessageIds = new Set();
+        let profile = {};
+        let selectedStatus = "online";
+        let selectedSettingsStatus = "online";
+        let avatarData = "";
+        let settingsAvatarData = "";
+        let aiHistory = [];
+        let aiPersonality = "You are a helpful, friendly AI assistant.";
+        let knownMessageIds = new Set();
 
-const statusColors = { online: "#43b581", busy: "#f04747", away: "#faa61a" };
-const statusLabels = { online: "🟢 Online", busy: "🔴 Busy", away: "🟡 Away" };
+        const statusColors = { online: "#43b581", busy: "#f04747", away: "#faa61a" };
+        const statusLabels = { online: "🟢 Online", busy: "🔴 Busy", away: "🟡 Away" };
 
-const presets = {
-    default: "You are a helpful, friendly AI assistant.",
-    pirate: "You are a pirate. You speak entirely in pirate slang and always reference the sea, treasure, and sailing. Yarr!",
-    roast: "You are a roast bot. You gently roast everything the user says in a funny, lighthearted way. Never be mean, just playfully sarcastic.",
-    shakespeare: "You are Shakespeare. You respond entirely in Early Modern English, using thee, thou, dost, and other Shakespearean language.",
-    teacher: "You are a knowledgeable teacher, who is very learned. You can explain things in great detail, and always ready to help."
-};
+        const presets = {
+            default: "You are a helpful, friendly AI assistant.",
+            pirate: "You are a pirate. You speak entirely in pirate slang and always reference the sea, treasure, and sailing. Yarr!",
+            roast: "You are a roast bot. You gently roast everything the user says in a funny, lighthearted way. Never be mean, just playfully sarcastic.",
+            shakespeare: "You are Shakespeare. You respond entirely in Early Modern English, using thee, thou, dost, and other Shakespearean language.",
+            teacher: "You are a knowledgeable teacher, who is very learned. You can explain things in great detail, and always ready to help."
+        };
 
-function switchTab(tab) {
-    document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
-    document.getElementById('signupForm').style.display = tab === 'signup' ? 'block' : 'none';
-    document.getElementById('loginTab').classList.toggle('active', tab === 'login');
-    document.getElementById('signupTab').classList.toggle('active', tab === 'signup');
-    showError('');
-}
-
-function showError(msg) {
-    const el = document.getElementById('errorMsg');
-    el.textContent = msg;
-    el.style.display = msg ? 'block' : 'none';
-}
-
-document.getElementById("avatarInput").addEventListener("change", function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-        document.getElementById("avatarPreview").src = ev.target.result;
-        avatarData = ev.target.result;
-    };
-    reader.readAsDataURL(file);
-});
-
-document.getElementById("settingsAvatarInput").addEventListener("change", function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-        document.getElementById("settingsAvatarPreview").src = ev.target.result;
-        settingsAvatarData = ev.target.result;
-    };
-    reader.readAsDataURL(file);
-});
-
-function selectStatus(el, context) {
-    const parent = el.closest('.status-options');
-    parent.querySelectorAll('.status-option').forEach(o => o.classList.remove('selected'));
-    el.classList.add('selected');
-    if (context === 'signup') selectedStatus = el.dataset.status;
-    if (context === 'settings') selectedSettingsStatus = el.dataset.status;
-}
-
-function openSettings() {
-    document.getElementById('settingsBio').value = profile.bio || '';
-    document.getElementById('settingsAvatarPreview').src = profile.avatar;
-    settingsAvatarData = '';
-    selectedSettingsStatus = profile.status || 'online';
-    document.querySelectorAll('#settingsOverlay .status-option').forEach(o => {
-        o.classList.toggle('selected', o.dataset.status === selectedSettingsStatus);
-    });
-    document.getElementById('settingsOverlay').classList.add('open');
-}
-
-function closeSettings(e) {
-    if (e.target === document.getElementById('settingsOverlay'))
-        document.getElementById('settingsOverlay').classList.remove('open');
-}
-
-async function saveSettings() {
-    const bio = document.getElementById('settingsBio').value.trim();
-    const avatar = settingsAvatarData || profile.avatar;
-    profile.bio = bio;
-    profile.status = selectedSettingsStatus;
-    profile.avatar = avatar;
-    await fetch('/profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(profile)
-    });
-    document.getElementById('headerAvatar').src = avatar;
-    document.getElementById('settingsOverlay').classList.remove('open');
-}
-
-async function showProfile(username) {
-    const res = await fetch(`/profile/${username}`);
-    const data = await res.json();
-    if (!data) return;
-    document.getElementById('popupAvatar').src = data.avatar;
-    document.getElementById('popupUsername').textContent = data.username;
-    document.getElementById('popupStatus').textContent = statusLabels[data.status] || '🟢 Online';
-    document.getElementById('popupStatus').style.color = statusColors[data.status] || statusColors.online;
-    document.getElementById('popupBio').textContent = data.bio || 'No bio yet.';
-    document.getElementById('profileOverlay').classList.add('open');
-}
-
-function closeProfile(e) {
-    if (e.target === document.getElementById('profileOverlay'))
-        document.getElementById('profileOverlay').classList.remove('open');
-}
-
-function openAdmin() {
-    const key = prompt('Enter admin key:');
-    if (key) window.open(`/admin?key=${key}`, '_blank');
-}
-
-function toggleAI() {
-    const win = document.getElementById('aiWindow');
-    const btn = document.getElementById('aiToggle');
-    const isOpen = win.classList.contains('open');
-    win.classList.toggle('open', !isOpen);
-    btn.style.display = isOpen ? 'flex' : 'none';
-}
-
-function openPersonality() {
-    document.getElementById('personalityInput').value = aiPersonality === "You are a helpful, friendly AI assistant." ? '' : aiPersonality;
-    document.getElementById('personalityOverlay').classList.add('open');
-}
-
-function closePersonality(e) {
-    if (e.target === document.getElementById('personalityOverlay'))
-        document.getElementById('personalityOverlay').classList.remove('open');
-}
-
-function setPreset(name) {
-    document.getElementById('personalityInput').value = presets[name] === presets.default ? '' : presets[name];
-}
-
-function savePersonality() {
-    const val = document.getElementById('personalityInput').value.trim();
-    aiPersonality = val || presets.default;
-    aiHistory = [];
-    document.getElementById('aiMessages').innerHTML = '<div class="ai-msg assistant">Personality updated! Ask me anything 👋</div>';
-    document.getElementById('personalityOverlay').classList.remove('open');
-}
-
-async function sendAI() {
-    const input = document.getElementById('aiInput');
-    const text = input.value.trim();
-    if (!text) return;
-    input.value = '';
-    appendAIMsg(text, 'user');
-    aiHistory.push({ role: 'user', content: text });
-    const typing = appendAIMsg('Thinking...', 'typing');
-    const res = await fetch('/ai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: aiHistory, personality: aiPersonality })
-    });
-    const data = await res.json();
-    typing.remove();
-    appendAIMsg(data.reply, 'assistant');
-    aiHistory.push({ role: 'assistant', content: data.reply });
-}
-
-function appendAIMsg(text, role) {
-    const div = document.createElement('div');
-    div.classList.add('ai-msg', role);
-    div.textContent = text;
-    const container = document.getElementById('aiMessages');
-    container.appendChild(div);
-    container.scrollTop = container.scrollHeight;
-    return div;
-}
-
-document.getElementById('aiInput').addEventListener('keypress', e => {
-    if (e.key === 'Enter') sendAI();
-});
-
-async function doLogin() {
-    const username = document.getElementById("loginUsername").value.trim();
-    const password = document.getElementById("loginPassword").value.trim();
-    if (!username || !password) return showError("Please fill in all fields");
-    const res = await fetch('/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-    });
-    const data = await res.json();
-    if (!data.success) return showError(data.error);
-    enterChat(data.user);
-}
-
-async function doSignup() {
-    const username = document.getElementById("signupUsername").value.trim();
-    const password = document.getElementById("signupPassword").value.trim();
-    const bio = document.getElementById("signupBio").value.trim();
-    if (!username || !password) return showError("Username and password required");
-    const avatar = avatarData || `https://api.dicebear.com/7.x/bottts/svg?seed=${username}`;
-    const res = await fetch('/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, bio, status: selectedStatus, avatar })
-    });
-    const data = await res.json();
-    if (!data.success) return showError(data.error);
-    enterChat({ username, bio, status: selectedStatus, avatar });
-}
-
-async function enterChat(user) {
-    profile = user;
-    document.getElementById("authScreen").style.display = "none";
-    document.getElementById("headerAvatar").src = user.avatar;
-    document.getElementById("aiToggle").classList.add('visible');
-
-    if (user.username === 'Indian_IV') {
-        document.getElementById('adminBtn').style.display = 'flex';
-    }
-
-    const res = await fetch('/messages');
-    const msgs = await res.json();
-    msgs.forEach(m => {
-        knownMessageIds.add(m.id);
-        fetch(`/profile/${m.username}`)
-            .then(r => r.json())
-            .then(p => appendMessage({
-                username: m.username,
-                content: m.content,
-                system: false,
-                avatar: p ? p.avatar : `https://api.dicebear.com/7.x/bottts/svg?seed=${m.username}`,
-                status: p ? p.status : 'online',
-                bio: p ? p.bio : '',
-                id: m.id
-            }));
-    });
-
-    socket.emit("message", {
-        username: "System",
-        content: `${user.username} joined the chat! 👋`,
-        system: true
-    });
-}
-
-document.getElementById("loginPassword").addEventListener("keypress", e => {
-    if (e.key === "Enter") doLogin();
-});
-
-document.getElementById("messageInput").addEventListener("keypress", e => {
-    if (e.key === "Enter") sendMessage();
-});
-
-function sendMessage() {
-    const input = document.getElementById("messageInput");
-    const content = input.value.trim();
-    if (!content || !profile.username) return;
-    socket.emit("message", {
-        username: profile.username,
-        bio: profile.bio,
-        status: profile.status,
-        avatar: profile.avatar,
-        content,
-        system: false
-    });
-    input.value = "";
-}
-
-socket.on("message", function(data) { appendMessage(data); });
-
-socket.on('kicked', (data) => {
-    if (data.username === profile.username) {
-        alert('You have been kicked from the chat!');
-        location.reload();
-    }
-});
-
-// Poll for deleted messages every 3 seconds
-setInterval(async () => {
-    if (!profile.username) return;
-    const res = await fetch('/messages');
-    const msgs = await res.json();
-    const currentIds = new Set(msgs.map(m => m.id));
-    knownMessageIds.forEach(id => {
-        if (!currentIds.has(id)) {
-            const el = document.getElementById(`msg-${id}`);
-            if (el) el.remove();
+        // Sidebar clock + date + battery
+        function updateSidebar() {
+            const now = new Date();
+            document.getElementById('sidebarTime').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('sidebarDate').textContent = now.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
         }
-    });
-    knownMessageIds = currentIds;
-}, 3000);
+        setInterval(updateSidebar, 1000);
+        updateSidebar();
 
-function appendMessage(data) {
-    const messages = document.getElementById("messages");
-    const div = document.createElement("div");
-    div.classList.add("message");
-    if (data.id) div.id = `msg-${data.id}`;
-   if (data.system) {
-        div.innerHTML = `<span class="system">${data.content}</span>`;
-    } else {
-        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const statusColor = statusColors[data.status] || statusColors.online;
-        div.innerHTML = `
-            <div class="avatar-wrapper">
-                <img class="avatar" src="${data.avatar}"
-                    onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${data.username}'"
-                    onclick="showProfile('${data.username}')" />
-                <div class="status-dot" style="background:${statusColor}"></div>
-            </div>
-            <div class="message-body">
-                <div class="message-header">
-                    <span class="username" onclick="showProfile('${data.username}')">${data.username}</span>
-                    <span class="timestamp">${time}</span>
-                </div>
-                ${data.bio ? `<span class="bio-tag">${data.bio}</span>` : ''}
-                <span class="content">${data.content}</span>
-            </div>
-        `;
-    }
-    messages.appendChild(div);
-    messages.scrollTop = messages.scrollHeight;
-}
+        // Battery
+        if (navigator.getBattery) {
+            navigator.getBattery().then(battery => {
+                function updateBattery() {
+                    const pct = Math.round(battery.level * 100);
+                    const charging = battery.charging ? '⚡' : '';
+                    document.getElementById('sidebarBattery').textContent = `${pct}% ${charging}`;
+                }
+                updateBattery();
+                battery.addEventListener('levelchange', updateBattery);
+                battery.addEventListener('chargingchange', updateBattery);
+            });
+        } else {
+            document.getElementById('sidebarBattery').textContent = 'N/A';
+        }
+
+        // Online users
+        socket.on('online_update', (data) => {
+            document.getElementById('sidebarOnlineCount').textContent = data.count;
+            const list = document.getElementById('onlineList');
+            list.innerHTML = '';
+            data.users.forEach(async username => {
+                const res = await fetch(`/profile/${username}`);
+                const p = await res.json();
+                const div = document.createElement('div');
+                div.classList.add('online-user');
+                div.innerHTML = `
+                    <img src="${p ? p.avatar : `https://api.dicebear.com/7.x/bottts/svg?seed=${username}`}" />
+                    <span>${username}</span>
+                    <div class="online-dot"></div>
+                `;
+                list.appendChild(div);
+            });
+        });
+
+        function switchTab(tab) {
+            document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+            document.getElementById('signupForm').style.display = tab === 'signup' ? 'block' : 'none';
+            document.getElementById('loginTab').classList.toggle('active', tab === 'login');
+            document.getElementById('signupTab').classList.toggle('active', tab === 'signup');
+            showError('');
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('errorMsg');
+            el.textContent = msg;
+            el.style.display = msg ? 'block' : 'none';
+        }
+
+        document.getElementById("avatarInput").addEventListener("change", function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                document.getElementById("avatarPreview").src = ev.target.result;
+                avatarData = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        document.getElementById("settingsAvatarInput").addEventListener("change", function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                document.getElementById("settingsAvatarPreview").src = ev.target.result;
+                settingsAvatarData = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function selectStatus(el, context) {
+            const parent = el.closest('.status-options');
+            parent.querySelectorAll('.status-option').forEach(o => o.classList.remove('selected'));
+            el.classList.add('selected');
+            if (context === 'signup') selectedStatus = el.dataset.status;
+            if (context === 'settings') selectedSettingsStatus = el.dataset.status;
+        }
+
+        function openSettings() {
+            document.getElementById('settingsBio').value = profile.bio || '';
+            document.getElementById('settingsAvatarPreview').src = profile.avatar;
+            settingsAvatarData = '';
+            selectedSettingsStatus = profile.status || 'online';
+            document.querySelectorAll('#settingsOverlay .status-option').forEach(o => {
+                o.classList.toggle('selected', o.dataset.status === selectedSettingsStatus);
+            });
+            document.getElementById('settingsOverlay').classList.add('open');
+        }
+
+        function closeSettings(e) {
+            if (e.target === document.getElementById('settingsOverlay'))
+                document.getElementById('settingsOverlay').classList.remove('open');
+        }
+
+        async function saveSettings() {
+            const bio = document.getElementById('settingsBio').value.trim();
+            const avatar = settingsAvatarData || profile.avatar;
+            profile.bio = bio;
+            profile.status = selectedSettingsStatus;
+            profile.avatar = avatar;
+            await fetch('/profile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(profile)
+            });
+            document.getElementById('headerAvatar').src = avatar;
+            document.getElementById('settingsOverlay').classList.remove('open');
+        }
+
+        async function showProfile(username) {
+            const res = await fetch(`/profile/${username}`);
+            const data = await res.json();
+            if (!data) return;
+            document.getElementById('popupAvatar').src = data.avatar;
+            document.getElementById('popupUsername').textContent = data.username;
+            document.getElementById('popupStatus').textContent = statusLabels[data.status] || '🟢 Online';
+            document.getElementById('popupStatus').style.color = statusColors[data.status] || statusColors.online;
+            document.getElementById('popupBio').textContent = data.bio || 'No bio yet.';
+            document.getElementById('profileOverlay').classList.add('open');
+        }
+
+        function closeProfile(e) {
+            if (e.target === document.getElementById('profileOverlay'))
+                document.getElementById('profileOverlay').classList.remove('open');
+        }
+
+        function openAdmin() {
+            const key = prompt('Enter admin key:');
+            if (key) window.open(`/admin?key=${key}`, '_blank');
+        }
+
+        function toggleAI() {
+            const win = document.getElementById('aiWindow');
+            const btn = document.getElementById('aiToggle');
+            const isOpen = win.classList.contains('open');
+            win.classList.toggle('open', !isOpen);
+            btn.style.display = isOpen ? 'flex' : 'none';
+        }
+
+        function openPersonality() {
+            document.getElementById('personalityInput').value = aiPersonality === "You are a helpful, friendly AI assistant." ? '' : aiPersonality;
+            document.getElementById('personalityOverlay').classList.add('open');
+        }
+
+        function closePersonality(e) {
+            if (e.target === document.getElementById('personalityOverlay'))
+                document.getElementById('personalityOverlay').classList.remove('open');
+        }
+
+        function setPreset(name) {
+            document.getElementById('personalityInput').value = presets[name] === presets.default ? '' : presets[name];
+        }
+
+        function savePersonality() {
+            const val = document.getElementById('personalityInput').value.trim();
+            aiPersonality = val || presets.default;
+            aiHistory = [];
+            document.getElementById('aiMessages').innerHTML = '<div class="ai-msg assistant">Personality updated! Ask me anything 👋</div>';
+            document.getElementById('personalityOverlay').classList.remove('open');
+        }
+
+        async function sendAI() {
+            const input = document.getElementById('aiInput');
+            const text = input.value.trim();
+            if (!text) return;
+            input.value = '';
+            appendAIMsg(text, 'user');
+            aiHistory.push({ role: 'user', content: text });
+            const typing = appendAIMsg('Thinking...', 'typing');
+            const res = await fetch('/ai', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ messages: aiHistory, personality: aiPersonality })
+            });
+            const data = await res.json();
+            typing.remove();
+            appendAIMsg(data.reply, 'assistant');
+            aiHistory.push({ role: 'assistant', content: data.reply });
+        }
+
+        function appendAIMsg(text, role) {
+            const div = document.createElement('div');
+            div.classList.add('ai-msg', role);
+            div.textContent = text;
+            const container = document.getElementById('aiMessages');
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+            return div;
+        }
+
+        document.getElementById('aiInput').addEventListener('keypress', e => {
+            if (e.key === 'Enter') sendAI();
+        });
+
+        async function doLogin() {
+            const username = document.getElementById("loginUsername").value.trim();
+            const password = document.getElementById("loginPassword").value.trim();
+            if (!username || !password) return showError("Please fill in all fields");
+            const res = await fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+            if (!data.success) return showError(data.error);
+            enterChat(data.user);
+        }
+
+        async function doSignup() {
+            const username = document.getElementById("signupUsername").value.trim();
+            const password = document.getElementById("signupPassword").value.trim();
+            const bio = document.getElementById("signupBio").value.trim();
+            if (!username || !password) return showError("Username and password required");
+            const avatar = avatarData || `https://api.dicebear.com/7.x/bottts/svg?seed=${username}`;
+            const res = await fetch('/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password, bio, status: selectedStatus, avatar })
+            });
+            const data = await res.json();
+            if (!data.success) return showError(data.error);
+            enterChat({ username, bio, status: selectedStatus, avatar });
+        }
+
+        async function enterChat(user) {
+            profile = user;
+            document.getElementById("authScreen").style.display = "none";
+            document.getElementById("headerAvatar").src = user.avatar;
+            document.getElementById("aiToggle").classList.add('visible');
+            document.getElementById("sidebar").classList.add('visible');
+
+            if (user.username === 'Indian_IV') {
+                document.getElementById('adminBtn').style.display = 'flex';
+            }
+
+            // Tell server this user is online
+            socket.emit('join', { username: user.username });
+
+            const res = await fetch('/messages');
+            const msgs = await res.json();
+            msgs.forEach(m => {
+                knownMessageIds.add(m.id);
+                fetch(`/profile/${m.username}`)
+                    .then(r => r.json())
+                    .then(p => appendMessage({
+                        username: m.username,
+                        content: m.content,
+                        system: false,
+                        avatar: p ? p.avatar : `https://api.dicebear.com/7.x/bottts/svg?seed=${m.username}`,
+                        status: p ? p.status : 'online',
+                        bio: p ? p.bio : '',
+                        id: m.id
+                    }));
+            });
+
+            socket.emit("message", {
+                username: "System",
+                content: `${user.username} joined the chat! 👋`,
+                system: true
+            });
+        }
+
+        document.getElementById("loginPassword").addEventListener("keypress", e => {
+            if (e.key === "Enter") doLogin();
+        });
+
+        document.getElementById("messageInput").addEventListener("keypress", e => {
+            if (e.key === "Enter") sendMessage();
+        });
+
+        function sendMessage() {
+            const input = document.getElementById("messageInput");
+            const content = input.value.trim();
+            if (!content || !profile.username) return;
+            socket.emit("message", {
+                username: profile.username,
+                bio: profile.bio,
+                status: profile.status,
+                avatar: profile.avatar,
+                content,
+                system: false
+            });
+            input.value = "";
+        }
+
+        socket.on("message", function(data) { appendMessage(data); });
+
+        socket.on('kicked', (data) => {
+            if (data.username === profile.username) {
+                alert('You have been kicked from the chat!');
+                location.reload();
+            }
+        });
+
+        // Poll for deleted messages every 3 seconds
+        setInterval(async () => {
+            if (!profile.username) return;
+            const res = await fetch('/messages');
+            const msgs = await res.json();
+            const currentIds = new Set(msgs.map(m => m.id));
+            knownMessageIds.forEach(id => {
+                if (!currentIds.has(id)) {
+                    const el = document.getElementById(`msg-${id}`);
+                    if (el) el.remove();
+                }
+            });
+            knownMessageIds = currentIds;
+        }, 3000);
+
+        function appendMessage(data) {
+            const messages = document.getElementById("messages");
+            const div = document.createElement("div");
+            div.classList.add("message");
+            if (data.id) div.id = `msg-${data.id}`;
+            if (data.system) {
+                div.innerHTML = `<span class="system">${data.content}</span>`;
+            } else {
+                const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const statusColor = statusColors[data.status] || statusColors.online;
+                div.innerHTML = `
+                    <div class="avatar-wrapper">
+                        <img class="avatar" src="${data.avatar}"
+                            onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${data.username}'"
+                            onclick="showProfile('${data.username}')" />
+                        <div class="status-dot" style="background:${statusColor}"></div>
+                    </div>
+                    <div class="message-body">
+                        <div class="message-header">
+                            <span class="username" onclick="showProfile('${data.username}')">${data.username}</span>
+                            <span class="timestamp">${time}</span>
+                        </div>
+                        ${data.bio ? `<span class="bio-tag">${data.bio}</span>` : ''}
+                        <span class="content">${data.content}</span>
+                    </div>
+                `;
+            }
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+        }
     </script>
 </body>
 </html>
-    

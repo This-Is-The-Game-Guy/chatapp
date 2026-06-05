@@ -12,6 +12,7 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 ADMIN_USERNAME = "Indian_IV"
+online_users = set()
 
 HTML = open(os.path.join(os.path.dirname(__file__), 'templates', 'index.html')).read()
 ADMIN_HTML = open(os.path.join(os.path.dirname(__file__), 'templates', 'admin.html')).read()
@@ -127,6 +128,10 @@ def get_messages():
     db.close()
     return jsonify([dict(m) for m in reversed(msgs)])
 
+@app.route("/online", methods=["GET"])
+def get_online():
+    return jsonify({"count": len(online_users), "users": list(online_users)})
+
 @app.route("/ai", methods=["POST"])
 def ai_chat():
     data = request.json
@@ -202,6 +207,23 @@ def admin_delete_message():
     db.close()
     socketio.emit('message_deleted', {'id': msg_id})
     return jsonify({"success": True})
+
+@socketio.on("join")
+def handle_join(data):
+    username = data.get('username')
+    if username:
+        online_users.add(username)
+        socketio.emit('online_update', {'count': len(online_users), 'users': list(online_users)})
+
+@socketio.on("disconnect")
+def handle_disconnect():
+    to_remove = None
+    for u in online_users:
+        to_remove = u
+        break
+    if to_remove:
+        online_users.discard(to_remove)
+        socketio.emit('online_update', {'count': len(online_users), 'users': list(online_users)})
 
 @socketio.on("message")
 def handle_message(data):
