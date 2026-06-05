@@ -430,7 +430,7 @@
     <!-- Auth Screen -->
     <div class="screen" id="authScreen">
         <div class="auth-box">
-            <h2>💬 BEST CHAT</h2>
+            <h2>💬 ChatApp</h2>
             <div class="tabs">
                 <div class="tab active" id="loginTab" onclick="switchTab('login')">Log In</div>
                 <div class="tab" id="signupTab" onclick="switchTab('signup')">Sign Up</div>
@@ -795,6 +795,22 @@
                         id: m.id
                     }));
             });
+            msgs.forEach(m => knownMessageIds.add(m.id));
+
+            socket.emit("message", {
+                username: "System",
+                content: `${user.username} joined the chat! 👋`,
+                system: true
+            });
+        }
+
+        document.getElementById("loginPassword").addEventListener("keypress", e => {
+            if (e.key === "Enter") doLogin();
+        });
+
+        document.getElementById("messageInput").addEventListener("keypress", e => {
+            if (e.key === "Enter") sendMessage();
+        });
 
             socket.emit("message", {
                 username: "System",
@@ -836,10 +852,22 @@
             }
         });
 
-        socket.on('message_deleted', (data) => {
-            const el = document.getElementById(`msg-${data.id}`);
+        // Poll for deleted messages every 3 seconds
+let knownMessageIds = new Set();
+
+setInterval(async () => {
+    if (!profile.username) return;
+    const res = await fetch('/messages');
+    const msgs = await res.json();
+    const currentIds = new Set(msgs.map(m => m.id));
+    knownMessageIds.forEach(id => {
+        if (!currentIds.has(id)) {
+            const el = document.getElementById(`msg-${id}`);
             if (el) el.remove();
-        });
+        }
+    });
+    knownMessageIds = currentIds;
+}, 1000);
 
         function appendMessage(data) {
             const messages = document.getElementById("messages");
